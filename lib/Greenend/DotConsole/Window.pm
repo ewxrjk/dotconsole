@@ -32,7 +32,6 @@ my $serial = 0;                         # serial number for windows, tmpdirs
 my %windows = ();                       # $windows{SERIAL} tracks open windows
 
 # Fonts
-# TODO should be editable
 my $editorFontName = "monospace 10";
 my $editorFont = Pango::FontDescription->from_string($editorFontName);
 
@@ -208,6 +207,10 @@ sub createMenuBar($) {
 
     my $viewMenu = $self->populateMenu
         (new Gtk2::Menu(),
+         $self->menuItem('gtk-select-font',
+                         [],
+                         sub { $self->cmdSelectFont(); }),
+         new Gtk2::SeparatorMenuItem(),
          $self->menuItem('gtk-zoom-in',
                          ['equal', 'control-mask'],
                          sub { $self->cmdZoomIn(); }),
@@ -432,6 +435,17 @@ sub createEditingPane($) {
     return $self;
 }
 
+# Set the font
+sub setEditorFont($$) {
+    my $self = shift;
+    $editorFontName = shift;
+    $editorFont = Pango::FontDescription->from_string($editorFontName);
+    for my $window (values %windows) {
+        $window->{errorView}->modify_font($editorFont);
+        $window->{editorView}->modify_font($editorFont);
+    }
+}
+
 # UI Commands -----------------------------------------------------------------
 
 sub cmdNew($) {
@@ -593,6 +607,16 @@ sub cmdDelete($) {
 sub cmdSelectAll($) {
     my $self = shift;
     $self->signalFocus('select-all', 1);
+}
+
+sub cmdSelectFont($) {
+    my $self = shift;
+    my $dialog = new Gtk2::FontSelectionDialog("Select font");
+    $dialog->set_font_name($editorFontName);
+    if($dialog->run() eq 'ok') {
+        $self->setEditorFont($dialog->get_font_name());
+    }
+    $dialog->destroy();
 }
 
 sub cmdZoomIn($) {
