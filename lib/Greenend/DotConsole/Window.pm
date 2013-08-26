@@ -8,6 +8,7 @@ use Gtk2::Gdk::Keysyms;
 use Glib;
 use File::Basename;
 use POSIX;
+use Time::HiRes;
 
 our $VERSION = "0.1";
 
@@ -361,6 +362,10 @@ sub createEditingPane($) {
     my $language = $lm->get_language("dot");
     $self->{editorBuffer}->set_language($language)
         if defined $language;   # can it ever fail?
+    $self->{editorBuffer}->signal_connect('changed' =>
+                                          sub {
+                                              $self->{lastChange} = Time::HiRes::time();
+                                          });
     return $self;
 }
 
@@ -759,10 +764,11 @@ sub redraw($$) {
 # Called periodically to re-render the current text
 sub checkTextChanged($) {
     my $self = shift;
-    # Don't attempt to render empty documents
-    my $text = $self->currentText();
-    return if $text =~ /^\s*$/s;
-    $self->render(0);                   # will do nothing if no change
+    if(!exists $self->{lastChange}
+       or Time::HiRes::time() - $self->{lastChange} >= 0.5) {
+        delete $self->{lastChange};
+        $self->render(0);                   # will do nothing if no change
+    }
 }
 
 # Set up for rendering the current text
