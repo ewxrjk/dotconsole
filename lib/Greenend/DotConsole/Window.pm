@@ -515,8 +515,6 @@ sub cmdQuit($) {
     Gtk2->main_quit();
 }
 
-# TODO text editor signals should go to focused widget
-
 sub cmdUndo($) {
     my $self = shift;
     $self->{editorView}->signal_emit('undo');
@@ -529,27 +527,27 @@ sub cmdRedo($) {
 
 sub cmdCut($) {
     my $self = shift;
-    $self->{editorView}->signal_emit('cut-clipboard');
+    $self->signalFocus('cut-clipboard');
 }
 
 sub cmdCopy($) {
     my $self = shift;
-    $self->{editorView}->signal_emit('copy-clipboard');
+    $self->signalFocus('copy-clipboard');
 }
 
 sub cmdPaste($) {
     my $self = shift;
-    $self->{editorView}->signal_emit('paste-clipboard');
+    $self->signalFocus('paste-clipboard');
 }
 
 sub cmdDelete($) {
     my $self = shift;
-    $self->{editorView}->signal_emit('delete-from-cursor', 'chars', 0);
+    $self->signalFocus('delete-from-cursor', 'chars', 0);
 }
 
 sub cmdSelectAll($) {
     my $self = shift;
-    $self->{editorView}->signal_emit('select-all', 1);
+    $self->signalFocus('select-all', 1);
 }
 
 sub cmdZoomIn($) {
@@ -1028,6 +1026,13 @@ sub fileFilter($$$) {
     $filter->add_pattern($pattern);
     $filter->set_name($name);
     return $filter;
+}
+
+# Send a signal to the focused widget, if it supports it
+sub signalFocus($@) {
+    my ($self, $signal, @args) = @_;
+    $self->{window}->get_focus()->signal_emit($signal, @args)
+        if defined $self->{window}->get_focus()->signal_query($signal);
 }
 
 # -----------------------------------------------------------------------------
