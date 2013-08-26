@@ -815,8 +815,9 @@ sub getScale($) {
         my $rw = $self->{rendered}->get_width();
         my $rh = $self->{rendered}->get_height();
         return 1 if !$rw or !$rh;       # avoid /0
-        my $ow = $self->{lastGraphWidth};
-        my $oh = $self->{lastGraphHeight};
+        # TODO -3 is an empirical hack...
+        my $ow = $self->{lastGraphWidth} - 3;
+        my $oh = $self->{lastGraphHeight} - 3;
         my $tw = $ow > $rw ? $rw : $ow; # target sizes (1:1 max)
         my $th = $oh > $rh ? $rh : $oh;
         my $sw = $tw / $rw;             # scales for target sizes
@@ -834,7 +835,6 @@ sub redraw($$) {
         $self->{graphImage}->set_from_pixbuf($self->{rendered});
         return;
     }
-    # TODO this isn't quite right, 'fit' overflows slightly...
     $w = int($self->{rendered}->get_width() * $self->getScale());
     $h = int($self->{rendered}->get_height() * $self->getScale());
     return if (!$force
