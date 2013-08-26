@@ -89,6 +89,7 @@ sub initialize($) {
 
     $self->setScale('fit');             # Default scaling
     $self->{editorView}->grab_focus();  # Input focus on editor window
+    $self->setSensitive();              # Set widget sensitivies
     $self->{window}->show_all();        # Make everything visible
 
     # Regularly check for subprocesses completion and text changes
@@ -295,6 +296,49 @@ sub populateMenu($$@) {
     return $menuShell;
 }
 
+# Set widget sensitivities
+sub setSensitive($) {
+    my $self = shift;
+    # File Menu
+    $self->{"menu-gtk-revert-to-saved"}->set_sensitive(exists $self->{path});
+    # Edit Menu
+    my $focus = $self->{window}->get_focus();
+    my $selectable = 0;
+    my $editable = 0;
+    my $selection = 0;
+    if(defined $focus and $focus->isa(*Gtk2::TextView)) {
+        $selectable = 1;
+        $editable = $focus->get_editable();
+        $selection = $focus->get_buffer()->get_has_selection();
+    }
+    $self->{"menu-gtk-cut"}->set_sensitive($editable and $selection);
+    $self->{"menu-gtk-copy"}->set_sensitive($selection);
+    $self->{"menu-gtk-paste"}->set_sensitive($editable);
+    $self->{"menu-gtk-delete"}->set_sensitive($editable and $selection);
+    $self->{"menu-gtk-select-all"}->set_sensitive($selectable);
+    # View Menu
+    $self->{"menu-gtk-zoom-fit"}->set_sensitive($self->{scale} ne 'fit');
+    $self->{"menu-gtk-zoom-100"}->set_sensitive($self->{scale} eq 'fit'
+                                                or $self->{scale} != 1.0);
+}
+
+sub textPaneSetup($$) {
+    my ($self, $view) = @_;
+    my $buffer = $view->get_buffer();
+    $view->signal_connect('focus-in-event',
+                          sub {
+                              $self->setSensitive();
+                          });
+    $view->signal_connect('focus-out-event',
+                          sub {
+                              $self->setSensitive();
+                          });
+    $buffer->signal_connect('mark-set',
+                            sub {
+                                $self->setSensitive();
+                            });
+}
+
 # Display output --------------------------------------------------------------
 
 # Create the graph pane
@@ -318,6 +362,7 @@ sub createErrorPane($) {
                                            $self->errorPanelPopup(@_);
                                        });
     $self->{errorBuffer} = $self->{errorView}->get_buffer();
+    $self->textPaneSetup($self->{errorView});
     return $self;
 }
 
@@ -384,6 +429,7 @@ sub createEditingPane($) {
                                           sub {
                                               $self->{lastChange} = Time::HiRes::time();
                                           });
+    $self->textPaneSetup($self->{editorView});
     return $self;
 }
 
@@ -710,6 +756,7 @@ sub setPath($$) {
     $self->{path} = $path;
     $self->{"menu-gtk-revert-to-saved"}->set_sensitive(1);
     $self->setTitle();
+    $self->setSensitive();
 }
 
 # Set the window title
@@ -734,6 +781,7 @@ sub setScale($$) {
     my $policy = $scale eq 'fit' ? 'never' : 'automatic';
     $self->{graphScroll}->set_policy($policy, $policy);
     $self->redraw(0);
+    $self->setSensitive();
 }
 
 # Get the current scale
