@@ -615,7 +615,7 @@ sub openFile($$) {
     if(!(open(INPUT, "<", $path)
          and (@contents = <INPUT>)
          and (close INPUT))) {
-        $self->complain("Reading from $path: $!");
+        $self->complain("I/O error", "Reading from $path: $!.");
         return 0;
     }
     $self->{editorBuffer}->delete($self->{editorBuffer}->get_start_iter(),
@@ -640,7 +640,7 @@ sub saveFile($$) {
     my $tmp = "$path.tmp";
     if(!($self->store($tmp)
          and (rename $tmp, $path))) {
-        $self->complain("Writing to $path: $!");
+        $self->complain("I/O error", "Writing to $path: $!.");
         unlink($tmp);
         return 0;
     }
@@ -842,29 +842,33 @@ sub exportTo($$) {
     my ($self, $path) = @_;
     my $ext;
     if($path !~ /\.([^\.]+)$/) {
-        return $self->complain("Cannot guess file type for $path");
+        return $self->complain("Error", "Cannot guess file type for $path.");
     }
     my $type = $1;
     my ($tmpdir, $error) = $self->renderSetup();
     if($error ne '') {
         $self->renderCleanup($tmpdir);
-        return $self->complain($error);
+        return $self->complain("I/O error", "$error.");
     }
     my $pid = fork();
     if(!defined $pid) {
         $self->renderCleanup($tmpdir);
-        return $self->complain("fork: $!");
+        return $self->complain("System error", "Error calling fork: $!.");
     }
     if($pid == 0) {
         $self->renderChild($tmpdir, $type, $path);
     }
     if(waitpid($pid, 0) != $pid) {
         $self->renderCleanup($tmpdir);
-        return $self->complain("waitpid: $!");
+        return $self->complain("System error", "Error calling waitpid: $!");
     }
     if($?) {
-        # TODO report stderr
-        return $self->complain("dot status $?");
+        my @errors;
+        if(open(ERRORS, "<", "$tmpdir/errors.txt")) {
+            @errors = <ERRORS>;
+            close ERRORS;
+        }
+        return $self->complain("Graphiz error", "Graphviz failed (wait status $?).", @errors);
     }
     $self->renderCleanup($tmpdir);
 }
@@ -955,15 +959,26 @@ sub scroll($$) {
 }
 
 # Display an error message
-sub complain($$) {
-    my $self = shift;
-    my $msg = shift;
+sub complain($$@) {
+    my ($self, $primary, $secondary, @details) = @_;
     my $dialog = new Gtk2::MessageDialog
         ($self->{window},
          'destroy-with-parent',
          'error',
          'ok',
-         $msg);
+         "%s", $primary);
+    $dialog->format_secondary_text("%s", $secondary)
+        if defined $secondary;
+    if(@details > 0) {
+        my $view = new Gtk2::TextView();
+        $view->modify_font($monospaceFont);
+        $view->set_editable(0);
+        $view->set_cursor_visible(0);
+        my $buffer = $view->get_buffer();
+        $buffer->insert($buffer->get_start_iter(), join("", @details));
+        $dialog->get_content_area()->add($self->frame($view));
+        $dialog->get_content_area()->show_all();
+    }
     $dialog->run();
     $dialog->destroy();
     return $self;
