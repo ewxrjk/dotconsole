@@ -297,6 +297,7 @@ sub populateMenu($$@) {
 
 # Display output --------------------------------------------------------------
 
+# Create the graph pane
 sub createGraphPane($) {
     my $self = shift;
     $self->{graphImage} = new Gtk2::Image();
@@ -305,7 +306,7 @@ sub createGraphPane($) {
 
 # Display errors --------------------------------------------------------------
 
-# Create the errors panel
+# Create the error pane
 sub createErrorPane($) {
     my $self = shift;
     $self->{errorView} = new Gtk2::TextView();
@@ -367,6 +368,7 @@ sub errorPanelPopup($$$) {
 
 # Edit input ------------------------------------------------------------------
 
+# Create the editing pane
 sub createEditingPane($) {
     my $self = shift;
     $self->{editorView} = new Gtk2::SourceView2::View();
@@ -1009,6 +1011,7 @@ sub complain($$@) {
     return $self;
 }
 
+# Configure a file chooser for *.dot files
 sub configureFileChooser($$) {
     my ($self, $chooser) = @_;
     $chooser->set_current_folder(defined $self->{path}
@@ -1018,6 +1021,7 @@ sub configureFileChooser($$) {
     $chooser->add_filter($self->fileFilter("*", "All files"));
 }
 
+# Create a FileFilter
 sub fileFilter($$$) {
     my ($self, $pattern, $name) = @_;
     my $filter = new Gtk2::FileFilter();
