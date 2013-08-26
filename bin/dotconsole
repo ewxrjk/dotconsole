@@ -121,7 +121,7 @@ Cut highlighted text from the editing pane.
 
 =item B<Copy>
 
-Copy highlighted text in the editing pane.
+Copy highlighted text in the editing or error pane.
 
 =item B<Paste>
 
@@ -133,7 +133,7 @@ Delete highlighted text from the editing pane.
 
 =item B<Select All>
 
-Select all text in the editing pane.
+Select all text in the editing or error pane.
 
 =back
 
