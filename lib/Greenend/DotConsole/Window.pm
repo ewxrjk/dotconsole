@@ -57,17 +57,17 @@ sub initialize($) {
 
     # Create widgets
     $self->createMenuBar();
-    $self->createOutputPanel();
-    $self->createErrorPanel();
-    $self->createEditorPanel();
+    $self->createGraphPane();
+    $self->createErrorPane();
+    $self->createEditingPane();
 
     # Display them
     $self->layout();
 
     # Detect size changes
-    $self->{outputScroll}->signal_connect('size-allocate' =>
+    $self->{graphScroll}->signal_connect('size-allocate' =>
                                           sub {
-                                              $self->outputSize(@_);
+                                              $self->graphSizeChanged(@_);
                                           });
 
     $self->setScale('fit');             # Default scaling
@@ -91,15 +91,15 @@ sub initialize($) {
 sub layout($) {
     my $self = shift;
 
-    # Output image and errors are separate tabs in a notebook; the
+    # Graph and errors are separate tabs in a notebook; the
     # most appropriate will be selected after re-rendering.
     $self->{notebook} = new Gtk2::Notebook();
-    $self->{outputScroll} = $self->scroll($self->{outputImage});
-    $self->{notebook}->append_page($self->{outputScroll}, "Graph");
+    $self->{graphScroll} = $self->scroll($self->{graphImage});
+    $self->{notebook}->append_page($self->{graphScroll}, "Graph");
     $self->{errorScroll} = $self->scroll($self->{errorView});
     $self->{notebook}->append_page($self->{errorScroll}, "Errors");
 
-    # The divide between the output notebook and the text editor is
+    # The divide between the graph/error notebook and the text editor is
     # movable.
     my $vpane = new Gtk2::VPaned();
     $vpane->pack1($self->{notebook}, 1, 1);
@@ -114,16 +114,16 @@ sub layout($) {
     return $self;
 }
 
-# Called when outputScroll's size allocation is changed
-sub outputSize($$$) {
+# Called when graphScroll's size allocation is changed
+sub graphSizeChanged($$$) {
     my ($self, $widget, $r) = @_;
     my $w = $r->width();
     my $h = $r->height();
-    return if(exists $self->{lastOutputWidth}
-              and $w == $self->{lastOutputWidth}
-              and $h == $self->{lastOutputHeight}); # skip non-changes
-    $self->{lastOutputWidth} = $w;
-    $self->{lastOutputHeight} = $h;
+    return if(exists $self->{lastGraphWidth}
+              and $w == $self->{lastGraphWidth}
+              and $h == $self->{lastGraphHeight}); # skip non-changes
+    $self->{lastGraphWidth} = $w;
+    $self->{lastGraphHeight} = $h;
     $self->redraw(0) if $self->{scale} eq 'fit';
 }
 
@@ -280,16 +280,16 @@ sub populateMenu($$@) {
 
 # Display output --------------------------------------------------------------
 
-sub createOutputPanel($) {
+sub createGraphPane($) {
     my $self = shift;
-    $self->{outputImage} = new Gtk2::Image();
+    $self->{graphImage} = new Gtk2::Image();
     return $self;
 }
 
 # Display errors --------------------------------------------------------------
 
 # Create the errors panel
-sub createErrorPanel($) {
+sub createErrorPane($) {
     my $self = shift;
     $self->{errorView} = new Gtk2::TextView();
     $self->{errorView}->modify_font($monospaceFont);
@@ -350,7 +350,7 @@ sub errorPanelPopup($$$) {
 
 # Edit input ------------------------------------------------------------------
 
-sub createEditorPanel($) {
+sub createEditingPane($) {
     my $self = shift;
     $self->{editorView} = new Gtk2::SourceView2::View();
     $self->{editorView}->set_show_line_numbers(1);
@@ -711,7 +711,7 @@ sub setScale($$) {
     my ($self, $scale) = @_;
     $self->{scale} = $scale;
     my $policy = $scale eq 'fit' ? 'never' : 'automatic';
-    $self->{outputScroll}->set_policy($policy, $policy);
+    $self->{graphScroll}->set_policy($policy, $policy);
     $self->redraw(0);
 }
 
@@ -723,8 +723,8 @@ sub getScale($) {
         my $rw = $self->{rendered}->get_width();
         my $rh = $self->{rendered}->get_height();
         return 1 if !$rw or !$rh;       # avoid /0
-        my $ow = $self->{lastOutputWidth};
-        my $oh = $self->{lastOutputHeight};
+        my $ow = $self->{lastGraphWidth};
+        my $oh = $self->{lastGraphHeight};
         my $tw = $ow > $rw ? $rw : $ow; # target sizes (1:1 max)
         my $th = $oh > $rh ? $rh : $oh;
         my $sw = $tw / $rw;             # scales for target sizes
@@ -739,7 +739,7 @@ sub redraw($$) {
     return unless exists $self->{rendered};
     my ($w, $h);
     if($self->{scale} ne 'fit' and $self->{scale} == 1.0) { # not scaled!
-        $self->{outputImage}->set_from_pixbuf($self->{rendered});
+        $self->{graphImage}->set_from_pixbuf($self->{rendered});
         return;
     }
     # TODO this isn't quite right, 'fit' overflows slightly...
@@ -751,7 +751,7 @@ sub redraw($$) {
                and $self->{lastRedrawHeight} == $h);
     return if $w < 16 or $h < 16;       # tiny sizes cause hangs!
     $self->{displayed} = $self->{rendered}->scale_simple($w, $h, 'hyper');
-    $self->{outputImage}->set_from_pixbuf($self->{displayed});
+    $self->{graphImage}->set_from_pixbuf($self->{displayed});
     $self->{lastRedrawWidth} = $w;
     $self->{lastRedrawHeight} = $h;
 }
