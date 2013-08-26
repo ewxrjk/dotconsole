@@ -780,6 +780,9 @@ sub redraw($$) {
 # Called periodically to re-render the current text
 sub checkTextChanged($) {
     my $self = shift;
+    # Don't attempt to render empty documents
+    my $text = $self->currentText();
+    return if $text =~ /^\s*$/s;
     if(!exists $self->{lastChange}
        or Time::HiRes::time() - $self->{lastChange} >= 0.5) {
         delete $self->{lastChange};
