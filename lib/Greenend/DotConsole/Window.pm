@@ -33,9 +33,8 @@ my %windows = ();                       # $windows{SERIAL} tracks open windows
 
 # Fonts
 # TODO should be editable
-my $monospaceFont = new Pango::FontDescription();
-$monospaceFont->set_family("monospace");
-$monospaceFont->set_size(10 * Pango->scale);
+my $editorFontName = "monospace 10";
+my $editorFont = Pango::FontDescription->from_string($editorFontName);
 
 # Constructor
 sub new {
@@ -354,7 +353,7 @@ sub createGraphPane($) {
 sub createErrorPane($) {
     my $self = shift;
     $self->{errorView} = new Gtk2::TextView();
-    $self->{errorView}->modify_font($monospaceFont);
+    $self->{errorView}->modify_font($editorFont);
     $self->{errorView}->set_editable(0);
     $self->{errorView}->set_cursor_visible(0);
     $self->{errorView}->signal_connect('populate-popup',
@@ -418,7 +417,7 @@ sub createEditingPane($) {
     my $self = shift;
     $self->{editorView} = new Gtk2::SourceView2::View();
     $self->{editorView}->set_show_line_numbers(1);
-    $self->{editorView}->modify_font($monospaceFont);
+    $self->{editorView}->modify_font($editorFont);
     $self->{editorView}->set_size_request(-1, 192);
     $self->{editorBuffer} = $self->{editorView}->get_buffer();
     my $lm = Gtk2::SourceView2::LanguageManager->get_default();
@@ -1044,7 +1043,7 @@ sub complain($$@) {
         if defined $secondary;
     if(@details > 0) {
         my $view = new Gtk2::TextView();
-        $view->modify_font($monospaceFont);
+        $view->modify_font($editorFont);
         $view->set_editable(0);
         $view->set_cursor_visible(0);
         my $buffer = $view->get_buffer();
