@@ -1,0 +1,21 @@
+Source: dotconsole
+Section: devel
+Priority: optional
+Maintainer: Richard Kettlewell <rjk@terraraq.org.uk>
+Build-Depends: debhelper (>= 8)
+Build-Depends-Indep: libgtk2-perl,
+ libgtk2-sourceview2-perl
+ perl,
+ perl-modules
+Standards-Version: 3.9.2
+Homepage: https://github.com/ewxrjk/dotconsole
+
+Package: dotconsole
+Architecture: all
+Depends: ${misc:Depends}, ${perl:Depends},
+ libgtk2-perl,libgtk2-sourceview2-perl,graphviz
+Description: Interactive editor for Graphviz source files
+ Provides a user interface for editing Graphviz inputs.  Results are
+ displayed automatically as the user types.
+ Graphs may be exported to PNG, SVG, Postscript or PDF files.
+

@@ -1,0 +1,200 @@
+#! /usr/bin/perl -w
+use strict;
+use warnings;
+use Gtk2 '-init';
+use Greenend::DotConsole::Window;
+
+=head1 NAME
+
+dotconsole - interactive editor for Graphviz source files
+
+=head1 SYNOPSIS
+
+B<dotconsole> [I<OPTIONS>] [B<-->] [I<PATH> ...]
+
+=head1 DESCRIPTION
+
+B<dotconsole> provides a simple editor for Graphviz source files, with
+the results displayed automatically.
+
+=head1 OPTIONS
+
+=over 8
+
+=item B<--help>
+
+Display a usage message.
+
+=item B<--version>
+
+Display a version string
+
+=back
+
+=head1 WINDOW LAYOUT
+
+At the top of the window is the menu bar.  See B<MENU BAR> below for
+more details.
+
+At the bottom of the window is the editing pane. Here you can edit the
+graph definition.
+
+In the middle is a tab group, with a choice of the graph pane or the
+error pane.  The graph pane displays the rendered graph corresponding
+to the contents of the editing pane.  The error pane displays error
+output from Graphviz.
+
+=head1 MENU BAR
+
+=head2 File Menu
+
+=over 8
+
+=item B<New>
+
+Creates a new window with an empty editing pane.
+
+=item B<Open>
+
+Opens an existing file.
+Normally a new window is created but if there is nothing in the current
+editing pane, it is used instead.
+
+=item B<Save>
+
+Save the contents of the editing pane under its existing name.
+
+=item B<Save as>
+
+Save the current contents of the editing pane under a new name.
+
+=item B<Export>
+
+Formats the contents of the editing pane and saves the result in a
+PNG, SVG, PDF or Postscript file.
+
+=item B<Revert>
+
+Reloads the current file from disk.
+
+=item B<Close>
+
+Closes the window.
+
+=item B<Quit>
+
+Closes all windows.
+
+=back
+
+=head2 Edit Menu
+
+=over 8
+
+=item B<Undo>
+
+Undoes the last change in the editing pane.
+
+=item B<Redo>
+
+Redoes the last undone change in the editing pane.
+
+=item B<Cut>
+
+Cut highlighted text from the editing pane.
+
+=item B<Copy>
+
+Copy highlighted text in the editing pane.
+
+=item B<Paste>
+
+Paste into the editing pane.
+
+=item B<Delete>
+
+Delete highlighted text from the editing pane.
+
+=item B<Select All>
+
+Select all text in the editing pane.
+
+=back
+
+=head2 View Menu
+
+=over 8
+
+=item B<Zoom In>
+
+Expand the graph in the graph pane.
+
+=item B<Zoom Out>
+
+Shrink the graph in the graph pane.
+
+=item B<Normal Size>
+
+Zoom the graph in the graph pane to full size, i.e. no rescaling.
+
+=item B<Best Fit>
+
+Zoom the graph in the graph pane to fit exactly.
+
+=item B<Refresh>
+
+Force regeneration of the graph in the graph pane.
+
+=back
+
+=head1 NOTES
+
+Very little of this program is specific to Graphviz; it could be
+adapted front-end other applications in a similar fashion.
+
+=head1 SEE ALSO
+
+B<dot>(1)
+
+=cut
+
+while(@ARGV > 0 and $ARGV[0] =~ /^-/) {
+    my $opt = shift;
+    if($opt eq "--help") {
+        print
+"Usage:
+  dotconsole [OPTIONS] [--] [PATH]
+
+Options:
+  --help       Display usage message
+  --version    Display version string
+";
+        exit 0;
+    } elsif($opt eq '--version') {
+        print "$Greenend::DotConsole::Window::VERSION\n";
+        exit 0;
+    } elsif($opt eq "--") {
+        last;
+    } else {
+        die "ERROR: unknown option '$opt'\n";
+    }
+}
+
+# Create the UI ---------------------------------------------------------------
+
+if(@ARGV > 0) {
+    for my $path (@ARGV) {
+        die "ERROR: $path cannot be read\n" unless -r $path;
+        die "ERROR: $path is not a regular file\n" unless -f $path;
+    }
+    for my $path (@ARGV) {
+        my $window = new Greenend::DotConsole::Window();
+        $window->openFile($path) or die "ERROR: cannot open $path\n";
+    }
+} else {
+    new Greenend::DotConsole::Window();
+}
+
+# Run the UI ------------------------------------------------------------------
+
+Gtk2->main();

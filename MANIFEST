@@ -1,0 +1,7 @@
+MANIFEST
+Makefile.PL
+README.md
+COPYING
+lib/Greenend/DotConsoleWindow.pm
+bin/dotconsole
+
