@@ -18,9 +18,9 @@ package Greenend::DotConsole::Window;
 use warnings;
 use strict;
 use utf8;
-use Gtk2;
-use Gtk2::SourceView2;
-use Gtk2::Gdk::Keysyms;
+use Gtk3;
+use Gtk3::SourceView;
+use Gtk3::Gdk::Keysyms;
 use Glib;
 use File::Basename;
 use POSIX;
@@ -50,7 +50,7 @@ sub initialize($) {
     $windows{$self->{serial}} = $self;
 
     # Window widget
-    $self->{window} = new Gtk2::Window('toplevel');
+    $self->{window} = new Gtk3::Window('toplevel');
     $self->{window}->set_title("dotconsole");
     $self->{window}->set_size_request(960, 640);
     $self->{window}->signal_connect('delete-event' =>
@@ -63,11 +63,11 @@ sub initialize($) {
                                     sub {
                                         delete $windows{$self->{serial}};
                                         Glib::Source->remove($self->{timerId});
-                                        Gtk2->main_quit() if !keys %windows;
+                                        Gtk3->main_quit() if !keys %windows;
                                     });
 
     # Accelerators
-    $self->{accelerators} = Gtk2::AccelGroup->new();
+    $self->{accelerators} = Gtk3::AccelGroup->new();
     $self->{window}->add_accel_group($self->{accelerators});
 
     # Create widgets
@@ -109,7 +109,7 @@ sub layout($) {
 
     # Graph and errors are separate tabs in a notebook; the
     # most appropriate will be selected after re-rendering.
-    $self->{notebook} = new Gtk2::Notebook();
+    $self->{notebook} = new Gtk3::Notebook();
     $self->{graphScroll} = $self->scroll($self->{graphImage});
     $self->{notebook}->append_page($self->{graphScroll}, "Graph");
     $self->{errorScroll} = $self->scroll($self->{errorView});
@@ -117,11 +117,11 @@ sub layout($) {
 
     # The divide between the graph/error notebook and the text editor is
     # movable.
-    my $vpane = new Gtk2::VPaned();
+    my $vpane = new Gtk3::VPaned();
     $vpane->pack1($self->{notebook}, 1, 1);
     $vpane->pack2($self->frame($self->scroll($self->{editorView})), 1, 1);
 
-    my $vbox = new Gtk2::VBox(0, 0);
+    my $vbox = new Gtk3::VBox(0, 0);
     $vbox->pack_start($self->{menubar}, 0, 0, 1);
     $vbox->pack_start($vpane, 1, 1, 1);
 
@@ -150,14 +150,14 @@ sub createMenuBar($) {
     my $self = shift;
 
     my $fileMenu = $self->populateMenu
-        (new Gtk2::Menu(),
+        (new Gtk3::Menu(),
          $self->menuItem('gtk-new',
                          ['n', 'control-mask'],
                          sub { $self->cmdNew(); }),
          $self->menuItem('gtk-open',
                          ['o', 'control-mask'],
                          sub { $self->cmdOpen(); }),
-         new Gtk2::SeparatorMenuItem(),
+         new Gtk3::SeparatorMenuItem(),
          $self->menuItem('gtk-save',
                          ['s', 'control-mask'],
                          sub { $self->cmdSave(); }),
@@ -167,11 +167,11 @@ sub createMenuBar($) {
          $self->menuItem('Export',
                          [],
                          sub { $self->cmdExport() }),
-         new Gtk2::SeparatorMenuItem(),
+         new Gtk3::SeparatorMenuItem(),
          $self->menuItem('gtk-revert-to-saved',
                          [],
                          sub { $self->cmdRevert(); }),
-         new Gtk2::SeparatorMenuItem(),
+         new Gtk3::SeparatorMenuItem(),
          $self->menuItem('gtk-close',
                          ['w', 'control-mask'],
                          sub { $self->cmdClose(); }),
@@ -180,14 +180,14 @@ sub createMenuBar($) {
                          sub { $self->cmdQuit(); }));
 
     my $editMenu = $self->populateMenu
-        (new Gtk2::Menu(),
+        (new Gtk3::Menu(),
          $self->menuItem('gtk-undo',
                          ['z', 'control-mask'],
                          sub { $self->cmdUndo(); }),
          $self->menuItem('gtk-redo',
                          ['y', 'control-mask'],
                          sub { $self->cmdRedo(); }),
-         new Gtk2::SeparatorMenuItem(),
+         new Gtk3::SeparatorMenuItem(),
         $self->menuItem('gtk-cut',
                          ['x', 'control-mask'],
                          sub { $self->cmdCut(); }),
@@ -200,17 +200,17 @@ sub createMenuBar($) {
          $self->menuItem('gtk-delete',
                          [],
                          sub { $self->cmdDelete(); }),
-         new Gtk2::SeparatorMenuItem(),
+         new Gtk3::SeparatorMenuItem(),
          $self->menuItem('gtk-select-all',
                          ['a', 'control-mask'],
                          sub { $self->cmdSelectAll() }));
 
     my $viewMenu = $self->populateMenu
-        (new Gtk2::Menu(),
+        (new Gtk3::Menu(),
          $self->menuItem('gtk-select-font',
                          [],
                          sub { $self->cmdSelectFont(); }),
-         new Gtk2::SeparatorMenuItem(),
+         new Gtk3::SeparatorMenuItem(),
          $self->menuItem('gtk-zoom-in',
                          ['equal', 'control-mask'],
                          sub { $self->cmdZoomIn(); }),
@@ -223,19 +223,19 @@ sub createMenuBar($) {
          $self->menuItem('gtk-zoom-fit',
                          ['9', 'control-mask'],
                          sub { $self->cmdZoomFit(); }),
-         new Gtk2::SeparatorMenuItem(),
+         new Gtk3::SeparatorMenuItem(),
          $self->menuItem('gtk-refresh',
                          ['F5', []],
                          sub { $self->cmdRefresh(); }));
 
     my $helpMenu = $self->populateMenu
-        (new Gtk2::Menu(),
+        (new Gtk3::Menu(),
          $self->menuItem('gtk-about',
                          [],
                          sub { $self->cmdAbout(); }));
 
     $self->{menubar} = $self->populateMenu
-        (new Gtk2::MenuBar(),
+        (new Gtk3::MenuBar(),
          $self->menuItem('File',
                          [],
                          $fileMenu),
@@ -262,22 +262,22 @@ sub menuItem($$$$) {
     my $action = shift;                 # child menu/subroutine ref
     my $item;
     if($label =~ /^gtk-/) {
-        $item = Gtk2::ImageMenuItem->new_from_stock($label);
+        $item = Gtk3::ImageMenuItem->new_from_stock($label);
     } else {
-        $item = new Gtk2::MenuItem($label);
+        $item = new Gtk3::MenuItem($label);
     }
     $self->{"menu-$label"} = $item;
     if(ref $key eq 'ARRAY') {
         if(@$key > 0) {
             $item->add_accelerator('activate',
                                    $self->{accelerators},
-                                   $Gtk2::Gdk::Keysyms{$key->[0]}, $key->[1],
+                                   $Gtk3::Gdk::Keysyms{$key->[0]}, $key->[1],
                                    'visible');
         }
     } else {
         $item->add_accelerator('activate',
                                $self->{accelerators},
-                               $Gtk2::Gdk::Keysyms{$key}, [],
+                               $Gtk3::Gdk::Keysyms{$key}, [],
                                'visible');
     }
     if(ref $action eq 'CODE') {
@@ -308,7 +308,7 @@ sub setSensitive($) {
     my $selectable = 0;
     my $editable = 0;
     my $selection = 0;
-    if(defined $focus and $focus->isa(*Gtk2::TextView)) {
+    if(defined $focus and $focus->isa(*Gtk3::TextView)) {
         $selectable = 1;
         $editable = $focus->get_editable();
         $selection = $focus->get_buffer()->get_has_selection();
@@ -346,7 +346,7 @@ sub textPaneSetup($$) {
 # Create the graph pane
 sub createGraphPane($) {
     my $self = shift;
-    $self->{graphImage} = new Gtk2::Image();
+    $self->{graphImage} = new Gtk3::Image();
     return $self;
 }
 
@@ -355,7 +355,7 @@ sub createGraphPane($) {
 # Create the error pane
 sub createErrorPane($) {
     my $self = shift;
-    $self->{errorView} = new Gtk2::TextView();
+    $self->{errorView} = new Gtk3::TextView();
     $self->{errorView}->modify_font($editorFont);
     $self->{errorView}->set_editable(0);
     $self->{errorView}->set_cursor_visible(0);
@@ -398,7 +398,7 @@ sub errorPanelPopup($$$) {
         my ($line, $context) = ($1, $2);
         $context =~ s/ >>> //g;
         my $index = index($context, " <<< ");
-        my $item = new Gtk2::MenuItem('Jump to error location');
+        my $item = new Gtk3::MenuItem('Jump to error location');
         my $target = $self->{editorBuffer}->get_iter_at_line_index($line - 1,
                                                                    $index);
         $item->signal_connect('activate' =>
@@ -408,7 +408,7 @@ sub errorPanelPopup($$$) {
                                   $self->{editorView}->grab_focus();
                               });
         $menu->insert($item, 0);
-        $menu->insert(new Gtk2::SeparatorMenuItem(), 1);
+        $menu->insert(new Gtk3::SeparatorMenuItem(), 1);
         $menu->show_all();
     }
 }
@@ -418,12 +418,12 @@ sub errorPanelPopup($$$) {
 # Create the editing pane
 sub createEditingPane($) {
     my $self = shift;
-    $self->{editorView} = new Gtk2::SourceView2::View();
+    $self->{editorView} = new Gtk3::SourceView2::View();
     $self->{editorView}->set_show_line_numbers(1);
     $self->{editorView}->modify_font($editorFont);
     $self->{editorView}->set_size_request(-1, 192);
     $self->{editorBuffer} = $self->{editorView}->get_buffer();
-    my $lm = Gtk2::SourceView2::LanguageManager->get_default();
+    my $lm = Gtk3::SourceView2::LanguageManager->get_default();
     my $language = $lm->get_language("dot");
     $self->{editorBuffer}->set_language($language)
         if defined $language;   # can it ever fail?
@@ -459,7 +459,7 @@ sub cmdOpen($) {
     # this window
     my $trivial = ($self->{editorBuffer}->get_char_count() == 0
                    and !exists $self->{path});
-    my $chooser = new Gtk2::FileChooserDialog
+    my $chooser = new Gtk3::FileChooserDialog
         ("Open...",
          $self->{window},
          'open',
@@ -489,7 +489,7 @@ sub cmdSave($) {
 
 sub cmdSaveAs($) {
     my $self = shift;
-    my $chooser = new Gtk2::FileChooserDialog
+    my $chooser = new Gtk3::FileChooserDialog
         ("Save as...",
          $self->{window},
          'save',
@@ -508,7 +508,7 @@ sub cmdSaveAs($) {
 
 sub cmdExport($) {
     my $self = shift;
-    my $chooser = new Gtk2::FileChooserDialog
+    my $chooser = new Gtk3::FileChooserDialog
         ("Export to...",
          $self->{window},
          'save',
@@ -553,15 +553,15 @@ sub cmdQuit($) {
         ++$modified if $window->{editorBuffer}->get_modified();
     }
     if($modified > 0) {
-        my $dialog = new Gtk2::Dialog("Unsaved files",
+        my $dialog = new Gtk3::Dialog("Unsaved files",
                                       $self->{window},
                                       'destroy-with-parent',
                                       "Discard" => '1',
                                       'gtk-cancel' => 'cancel');
         $dialog->set_default_response('cancel');
-        my $label = new Gtk2::Label("$modified files have been modified.");
-        my $hbox = new Gtk2::HBox(0, 0);
-        $hbox->pack_start(Gtk2::Image->new_from_stock('gtk-dialog-question',
+        my $label = new Gtk3::Label("$modified files have been modified.");
+        my $hbox = new Gtk3::HBox(0, 0);
+        $hbox->pack_start(Gtk3::Image->new_from_stock('gtk-dialog-question',
                                                       'dialog'),
                           0, 0, 1);
         $hbox->pack_start($label, 0, 0, 1);
@@ -571,7 +571,7 @@ sub cmdQuit($) {
         $dialog->destroy();
         return if $response eq 'cancel';
     }
-    Gtk2->main_quit();
+    Gtk3->main_quit();
 }
 
 sub cmdUndo($) {
@@ -611,7 +611,7 @@ sub cmdSelectAll($) {
 
 sub cmdSelectFont($) {
     my $self = shift;
-    my $dialog = new Gtk2::FontSelectionDialog("Select font");
+    my $dialog = new Gtk3::FontSelectionDialog("Select font");
     $dialog->set_font_name($editorFontName);
     if($dialog->run() eq 'ok') {
         $self->setEditorFont($dialog->get_font_name());
@@ -646,7 +646,7 @@ sub cmdRefresh($) {
 
 sub cmdAbout($) {
     my $self = shift;
-    Gtk2->show_about_dialog($self->{window},
+    Gtk3->show_about_dialog($self->{window},
                             "authors" => "Richard Kettlewell",
                             "copyright" => "© 2013 Richard Kettlewell",
                             "license" =>
@@ -670,18 +670,18 @@ You should have received a copy of the GNU General Public License along with thi
 sub saveOffer($) {
     my $self = shift;
     return 1 unless $self->{editorBuffer}->get_modified();
-    my $dialog = new Gtk2::Dialog("Unsaved files",
+    my $dialog = new Gtk3::Dialog("Unsaved files",
                                   $self->{window},
                                   'destroy-with-parent',
                                   'gtk-save' => 'ok',
                                   "Discard" => '1',
                                   'gtk-cancel' => 'cancel');
     $dialog->set_default_response('cancel');
-    my $label = new Gtk2::Label
+    my $label = new Gtk3::Label
         ((exists $self->{path} ? basename($self->{path}) : "File ")
          . " has been modified.");
-    my $hbox = new Gtk2::HBox(0, 0);
-    $hbox->pack_start(Gtk2::Image->new_from_stock('gtk-dialog-question',
+    my $hbox = new Gtk3::HBox(0, 0);
+    $hbox->pack_start(Gtk3::Image->new_from_stock('gtk-dialog-question',
                                                   'dialog'),
                       0, 0, 1);
     $hbox->pack_start($label, 0, 0, 1);
@@ -998,7 +998,7 @@ sub renderOutcome($$$@) {
     $self->setErrors(@errors);
     if($rc == 0) {
         # Retrieve output and display it
-        $self->{rendered} = Gtk2::Gdk::Pixbuf->new_from_file("$tmpdir/output.png");
+        $self->{rendered} = Gtk3::Gdk::Pixbuf->new_from_file("$tmpdir/output.png");
         $self->redraw(1);
         $self->{notebook}->set_current_page(0);
     } else {
@@ -1029,7 +1029,7 @@ sub renderCleanup($$) {
 sub frame($$) {
     my $self = shift;
     my $widget = shift;
-    my $frame = new Gtk2::Frame();
+    my $frame = new Gtk3::Frame();
     $frame->set_shadow_type('in');
     $frame->add($widget);
     return $frame;
@@ -1039,14 +1039,14 @@ sub frame($$) {
 sub scroll($$) {
     my $self = shift;
     my $widget = shift;
-    my $scroller = new Gtk2::ScrolledWindow();
+    my $scroller = new Gtk3::ScrolledWindow();
     $scroller->set_policy('automatic', 'automatic');
-    if($widget->isa(*Gtk2::Layout)
-       or $widget->isa(*Gtk2::TreeView)
-       or $widget->isa(*Gtk2::TextView)
-       or $widget->isa(*Gtk2::IconView)
-       or $widget->isa(*Gtk2::ToolPalette)
-       or $widget->isa(*Gtk2::ViewPort)) { # no 'Scrollable' in Gtk2
+    if($widget->isa(*Gtk3::Layout)
+       or $widget->isa(*Gtk3::TreeView)
+       or $widget->isa(*Gtk3::TextView)
+       or $widget->isa(*Gtk3::IconView)
+       or $widget->isa(*Gtk3::ToolPalette)
+       or $widget->isa(*Gtk3::ViewPort)) { # no 'Scrollable' in Gtk3
         $scroller->add($widget);
     } else {
         $scroller->add_with_viewport($widget);
@@ -1057,7 +1057,7 @@ sub scroll($$) {
 # Display an error message
 sub complain($$@) {
     my ($self, $primary, $secondary, @details) = @_;
-    my $dialog = new Gtk2::MessageDialog
+    my $dialog = new Gtk3::MessageDialog
         ($self->{window},
          'destroy-with-parent',
          'error',
@@ -1066,7 +1066,7 @@ sub complain($$@) {
     $dialog->format_secondary_text("%s", $secondary)
         if defined $secondary;
     if(@details > 0) {
-        my $view = new Gtk2::TextView();
+        my $view = new Gtk3::TextView();
         $view->modify_font($editorFont);
         $view->set_editable(0);
         $view->set_cursor_visible(0);
@@ -1093,7 +1093,7 @@ sub configureFileChooser($$) {
 # Create a FileFilter
 sub fileFilter($$$) {
     my ($self, $pattern, $name) = @_;
-    my $filter = new Gtk2::FileFilter();
+    my $filter = new Gtk3::FileFilter();
     $filter->add_pattern($pattern);
     $filter->set_name($name);
     return $filter;

@@ -6,7 +6,7 @@ This program provides an interactive editor for Graphviz.
 Dependencies
 ------------
 
-    apt-get install libgtk2-perl graphviz
+    apt-get install libgtk3-perl graphviz
 
 Installation
 ------------

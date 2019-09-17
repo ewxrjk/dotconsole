@@ -11,8 +11,8 @@ WriteMakefile(
     LICENSE             => 'gpl',
     EXE_FILES => [ 'bin/dotconsole' ],
     PREREQ_PM => {
-        'Gtk2' => 0,
-        'Gtk2::SourceView2' => 0,
+        'Gtk3' => 0,
+        'Gtk3::SourceView' => 0,
     },
     dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
 );
