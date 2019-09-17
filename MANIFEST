@@ -2,6 +2,5 @@ MANIFEST
 Makefile.PL
 README.md
 COPYING
-lib/Greenend/DotConsoleWindow.pm
+lib/Greenend/DotConsole/Window.pm
 bin/dotconsole
-
