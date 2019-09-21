@@ -3,6 +3,19 @@ dotconsole
 
 This program provides an interactive editor for Graphviz.
 
+Obsolescence Warning
+--------------------
+
+This program is no longer maintained.
+I suggest using the
+[Graphviz Preview](https://marketplace.visualstudio.com/items?itemName=EFanZh.graphviz-preview)
+extension to [Visual Studio Code](https://code.visualstudio.com/)
+instead.
+
+This program depends on Gtk2.
+It could perhaps be updated to Gtk3 but there is no working gtk3-perl
+in Debian.
+
 Dependencies
 ------------
 
